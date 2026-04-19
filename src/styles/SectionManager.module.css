@@ -1,0 +1,191 @@
+.wrapper {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.scrollOuter {
+  position: absolute;
+  inset: 0;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollOuter::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Selection section ─────────────────────────── */
+.selectionWrapper {
+  height: 500svh;
+}
+
+.stickyFrame {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  width: 100%;
+  overflow: hidden;
+}
+
+.canvasArea {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-canvas);
+  pointer-events: none;
+  transition: none;
+  will-change: transform;
+}
+
+/* ── Glass panel ───────────────────────────────── */
+.glassPanel {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--header-height) + 1rem) 3vw 1rem;
+  background: rgba(10, 10, 10, 0.72);
+  transform: translateY(100%);
+  opacity: 0;
+  will-change: transform, opacity;
+  pointer-events: auto;
+  overflow-y: auto;
+}
+
+/* ── Card grid ─────────────────────────────────── */
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  width: 100%;
+  max-width: 1100px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ── Cards ─────────────────────────────────────── */
+.selectionCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  background: rgba(14, 14, 14, 0.95);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.25s ease;
+}
+
+.selectionCard:hover {
+  background: rgba(28, 28, 28, 0.98);
+}
+
+.cardCategory {
+  font-family: var(--font-serif);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: rgba(255, 255, 255, 0.45);
+  text-transform: uppercase;
+  padding: 2rem 2.4rem 0;
+  margin-bottom: 0.5rem;
+}
+
+.cardLabel {
+  font-family: var(--font-serif);
+  font-size: clamp(1.8rem, 4.2vw, 3rem);
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+  padding: 0 2.4rem;
+  margin-bottom: 1.6rem;
+}
+
+.cardDivider {
+  display: block;
+  width: calc(100% - 4.8rem);
+  margin: 0 2.4rem 1.2rem;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.cardSub {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: clamp(0.78rem, 1.4vw, 0.92rem);
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.04em;
+  padding: 0 2.4rem;
+  margin-bottom: 1.8rem;
+}
+
+.cardView {
+  font-family: var(--font-serif);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.65);
+  text-transform: uppercase;
+  padding: 0 2.4rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cardView::before {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.selectionCard:hover .cardLabel {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* ── Text overlay (poem) ───────────────────────── */
+.textOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-ui);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: calc(var(--header-height) + 1.5rem);
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+
+.poemBlock {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.poemHeading {
+  font-family: var(--font-script);
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  color: var(--color-text);
+  filter: url(#wobble-filter);
+  margin-bottom: 0.6rem;
+  line-height: 1.3;
+}
+
+.poemBody {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  color: var(--color-text-light);
+  max-width: 38ch;
+  line-height: 2;
+}
+
+.scrollSpacer {
+  height: 200svh;
+  pointer-events: none;
+}

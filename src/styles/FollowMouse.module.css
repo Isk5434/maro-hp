@@ -1,0 +1,18 @@
+.dot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-text);
+  pointer-events: none;
+  z-index: var(--z-ui);
+  will-change: transform;
+  opacity: 0.4;
+  transition: opacity var(--transition-fast);
+}
+
+.dot.hidden {
+  opacity: 0;
+}
