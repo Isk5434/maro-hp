@@ -1,10 +1,10 @@
 import { useFrame } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 import { useRef, Suspense } from 'react'
-
-useGLTF.setDecoderPath(`${import.meta.env.BASE_URL}draco/gltf/`)
 import * as THREE from 'three'
 import { MODEL_CONFIG } from '../../config/model.config'
+
+useGLTF.setDecoderPath(`${import.meta.env.BASE_URL}draco/gltf/`)
 
 function PrimitiveHouse() {
   const groupRef = useRef<THREE.Group>(null)
