@@ -7,6 +7,7 @@ import type { FloatingObjectConfig } from '../../config/floating-objects.config'
 
 FLOATING_OBJECTS.filter(c => c.shape === 'glb' && c.glbPath).forEach(c => useGLTF.preload(c.glbPath!))
 
+
 function FloatingGlb({ cfg }: { cfg: FloatingObjectConfig }) {
   const { scene } = useGLTF(cfg.glbPath!)
   const groupRef = useRef<THREE.Group>(null)
@@ -111,12 +112,17 @@ class GlbErrorBoundary extends Component<{ children: ReactNode }, { failed: bool
   render() { return this.state.failed ? null : this.props.children }
 }
 
+// ── Phone emerge: 1モデル分 ──
+// targetPos に下から (-5y) 飛び込んできて、π 回転 + スケール 0→1 で登場。
+// 着地後はサインカーブで持続フロート + 緩やかに自転。
+
 export function FloatingObjects() {
   const glbItems = FLOATING_OBJECTS.filter((cfg) => cfg.shape === 'glb')
   const primitiveItems = FLOATING_OBJECTS.filter((cfg) => cfg.shape !== 'glb')
 
   return (
     <>
+      {/* 1st layer: 既存のフロート群 */}
       {primitiveItems.map((cfg) => (
         <FloatingItem key={cfg.id} cfg={cfg} />
       ))}
@@ -127,6 +133,7 @@ export function FloatingObjects() {
           </Suspense>
         </GlbErrorBoundary>
       ))}
+
     </>
   )
 }

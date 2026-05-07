@@ -21,7 +21,7 @@
 
 /* ── Selection section ─────────────────────────── */
 .selectionWrapper {
-  height: 400svh;
+  height: 1300svh;
 }
 
 .stickyFrame {
@@ -150,6 +150,6 @@
 }
 
 .scrollSpacer {
-  height: 300svh;
+  height: 1200svh;
   pointer-events: none;
 }

@@ -7,14 +7,10 @@
   align-items: center;
   justify-content: center;
   z-index: var(--z-loading);
-  opacity: 1;
-  transition: opacity 0.8s ease, visibility 0.8s ease;
 }
 
-.overlay.hidden {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
+.overlay.clear {
+  background: transparent;
 }
 
 .title {
@@ -48,4 +44,27 @@
   letter-spacing: 0.12em;
   color: var(--color-text-light);
   font-family: var(--font-serif);
+}
+
+.enterBtn {
+  font-family: var(--font-serif);
+  font-size: 0.75rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  background: transparent;
+  border: 1px solid currentColor;
+  padding: 0.8rem 2.8rem;
+  cursor: pointer;
+  opacity: 0;
+  animation: fadeInBtn 0.6s ease 0.2s forwards;
+  transition: opacity 0.2s ease;
+}
+
+.enterBtn:hover {
+  opacity: 0.5;
+}
+
+@keyframes fadeInBtn {
+  to { opacity: 1; }
 }

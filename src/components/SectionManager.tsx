@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 import { SITE_CONTENT } from '../config/content'
 import { SceneCanvas } from './canvas/SceneCanvas'
 import { HeroSection } from './HeroSection'
@@ -13,6 +13,10 @@ function easeInOut(t: number): number {
 }
 
 const CARDS = SITE_CONTENT.selectionCards
+const SCENE_START_SCROLL = 0
+const SCENE_SCROLL_LENGTH = 10.0
+const PHASE3_START_SCROLL = 10.6
+const PHASE3_SCROLL_LENGTH = 0.8
 
 interface Props {
   mouseNx: number
@@ -24,14 +28,22 @@ export function SectionManager({ mouseNx, mouseNy }: Props) {
   const glassRef      = useRef<HTMLDivElement>(null)
   const canvasWrapRef = useRef<HTMLDivElement>(null)
 
+  const [sceneProgress, setSceneProgress] = useState(0)
+
   const handleScroll = useCallback(() => {
     const el = scrollRef.current
     if (!el) return
     const heroH = el.clientHeight
     const relScroll = el.scrollTop - heroH
+    const sceneStart = heroH * SCENE_START_SCROLL
+    const sceneLength = heroH * SCENE_SCROLL_LENGTH
+    const sceneRaw = Math.max(0, Math.min(1, (relScroll - sceneStart) / sceneLength))
+    setSceneProgress(sceneRaw)
 
-    // glass/cards rise (relScroll 0 → heroH*0.6)
-    const glassRaw = Math.max(0, Math.min(1, relScroll / (heroH * 0.6)))
+    // glass/cards rise after the phone scene has room to settle.
+    const phase3Start = heroH * PHASE3_START_SCROLL
+    const phase3Length = heroH * PHASE3_SCROLL_LENGTH
+    const glassRaw = Math.max(0, Math.min(1, (relScroll - phase3Start) / phase3Length))
     const glassT = easeInOut(glassRaw)
     if (glassRef.current) {
       glassRef.current.style.transform = `translateY(${lerp(100, 0, glassT)}%)`
@@ -59,7 +71,11 @@ export function SectionManager({ mouseNx, mouseNy }: Props) {
         <div className={styles.selectionWrapper}>
           <div className={styles.stickyFrame}>
             <div ref={canvasWrapRef} className={styles.canvasArea}>
-              <SceneCanvas mouseNx={mouseNx} mouseNy={mouseNy} />
+              <SceneCanvas
+                mouseNx={mouseNx}
+                mouseNy={mouseNy}
+                sceneProgress={sceneProgress}
+              />
             </div>
 
             <div ref={glassRef} className={styles.glassPanel}>

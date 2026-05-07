@@ -146,3 +146,16 @@ export const MODEL_CONFIG = {
 | 2026-04-19 | すりガラス選択画面実装。blobWrapper を 300svh→500svh に拡張し第2スクロールフェーズ追加。selectionT (0→1) で3Dキャンバスが下スライド・glassSurface (backdrop-filter: blur(28px)) が下から上昇。6枚カードグリッド（3列×2行）がstagger fade-in。カード項目はMAROオフィシャルサイトに準拠（MAROとは・活動内容・お問い合わせ・SNS3種）。ダークモード対応済み。 | Claude Code |
 | 2026-04-19 | 3d-model/ フォルダのGLBモデル3体（bunny, maro-inu-banzai, maro-inu-hand）をheroセクション外周に配置。FloatingObjectConfigにglb shapeとglbPath追加。FloatingObjects.tsxにFloatingGlb（useGLTF+scene.clone()）追加。public/models/ へコピー済み。 | Claude Code |
 | 2026-04-19 | GLB管理・デバッグ作業。useGLTF.setDecoderPath() が最上位で実行された結果 Canvas 初期化失敗。問題切り分けのため SectionManager を一時削除し HeroSection のみで動作確認。最終的に SectionManager 構造を再確認し、mouseNx/mouseNy プロップの削除でシンプル化。HeroCanvas・SceneCanvas・SectionManager から不要な Props を削除。現在プリミティブ構成で安定動作。 | Claude Code |
+| 2026-05-07 | フェーズ2のスマホ/島の登場演出を時間経過ベースからスクロール進捗ベースへ変更。SectionManagerで第2セクションのスクロール量をsceneProgressとして算出し、PhoneEmergeScene側のスマホ着地・島出現・浮遊位置を進捗から決定するよう調整。 | Codex |
+| 2026-05-07 | フェーズ3（ガラス面/カード）の開始タイミングを後ろ倒し。スマホ/島のスクロール同期演出が完了してから約0.4画面分の間隔を置き、0.7画面分でフェーズ3が立ち上がるよう調整。 | Codex |
+| 2026-05-07 | フェーズ1→2の見え方を調整。スマホ登場アニメーションが画面外/半表示中に進まないよう、PhoneEmergeSceneの進捗開始を第2セクションがフル表示される位置へ変更。フェーズ3開始も2.0画面分まで後ろ倒しして、スマホ登場・着地・カード表示の間隔を明確化。 | Codex |
+| 2026-05-07 | フェーズ2のスクロール同期速度を約33%低速化。PhoneEmergeSceneの進捗区間を1.5画面分から2.0画面分へ延長し、フェーズ3開始も2.5画面分へ後ろ倒しして間隔を維持。 | Codex |
+| 2026-05-07 | フェーズ2のスクロール同期区間を約66%延長へ再調整。PhoneEmergeSceneの進捗区間を2.5画面分、フェーズ3開始を3.0画面分に変更。 | Codex |
+| 2026-05-07 | フェーズ2をさらに4倍低速化。PhoneEmergeSceneの進捗区間を10.0画面分へ延長し、フェーズ3開始を10.6画面分に設定。SectionManagerの固定スクロール区間を1300svh/1200svhへ拡張し、フェーズ3が表示されない問題を修正。 | Codex |
+| 2026-05-07 | フェーズ2低速化によりスマホ初期姿勢が見えにくい時間も伸びていた問題を修正。PhoneEmergeSceneのスマホ初期角度を真横寄りから正面寄りへ変更し、初期スケール/奥行きも画面内で視認できる値に調整。 | Codex |
+| 2026-05-07 | 速いスライド時にフェーズ2の3D表示が一瞬消える問題を修正。スクロール同期化後は不要になったSceneCanvasのkeyリマウント処理をSectionManagerから削除し、Canvas/GLBの再初期化を防止。 | Codex |
+| 2026-05-07 | スマホ登場の初期演出を調整。PhoneEmergeSceneの初期スケール/奥行き/角度を変更し、青いスクリーン面が画面近くを覆う状態から開始。登場時のz軸回転量を半回転追加して360度回転に変更。 | Codex |
+| 2026-05-07 | スマホ登場演出を追加調整。初期スケールを11.5へ拡大し、z軸回転量をさらに半回転追加して450度回転に変更。 | Codex |
+| 2026-05-07 | スマホ登場の追加回転が最終姿勢へ影響しないよう修正。PhoneEmergeSceneの着地後z軸角度を元の5π/2-0.6に固定し、追加回転は登場区間のみへ限定。 | Codex |
+| 2026-05-07 | スマホ着地前の最終局面にz軸1回転を追加。最終的な見た目の向きは維持したまま、settle区間の補間先へ2πを加算して回転量のみ増加。 | Codex |
+| 2026-05-07 | フェーズ2モデルの参考サイト風プリミティブ構成（手/Z/リボン/睡眠球）を取り下げ。PhoneEmergeSceneを直前のスマホ＋島構成へ復元し、既存のスクロール同期・速度調整・回転調整は維持。 | Codex |
