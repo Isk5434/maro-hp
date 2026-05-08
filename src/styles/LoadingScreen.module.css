@@ -9,6 +9,11 @@
   will-change: transform, opacity;
 }
 
+.overlay.clear {
+  background: transparent;
+  pointer-events: none;
+}
+
 .content {
   display: flex;
   flex-direction: column;
