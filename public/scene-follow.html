@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Scene Follow — Horizontal Scroll Prototype</title>
+<style>
+  /* ───────────────────────────── Reset ───────────────────────────── */
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: #07070d;
+    color: #f3f1ea;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Hiragino Sans", sans-serif;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ───────────────────────── Scene wrapper ─────────────────────── */
+  /* spacer: tall enough to drive the entire horizontal travel
+     ★ Adjust 560vh based on card count × card width */
+  .scene {
+    height: 560vh;
+    position: relative;
+  }
+
+  /* sticky hold pins the canvas + traveler while body scrolls */
+  .scene__hold {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  canvas.webgl {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    display: block;
+  }
+
+  /* horizontal traveler: transformed by JS based on scroll progress */
+  .scene__travel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    will-change: transform;
+    z-index: 1;
+    pointer-events: none;
+  }
+  .scene__travel > * { pointer-events: auto; }
+
+  /* ─────────────────────────── Hero ─────────────────────────── */
+  .hero {
+    flex: 0 0 100vw;
+    height: 100vh;
+    padding: 0 8vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .hero__eyebrow {
+    font-size: 0.7rem;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    opacity: 0.55;
+    margin-bottom: 1.4rem;
+  }
+  .hero__title {
+    font-size: clamp(3rem, 9vw, 7.5rem);
+    font-weight: 200;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+  }
+  .hero__sub {
+    margin-top: 1.6rem;
+    font-size: 1rem;
+    opacity: 0.55;
+    max-width: 38ch;
+    line-height: 1.7;
+  }
+
+  /* ────────────────────────── Cards ────────────────────────── */
+  .cards {
+    display: flex;
+    gap: 8vw;
+    padding-right: 50vw;        /* allow last card to settle near center */
+    list-style: none;
+    align-items: center;
+    height: 100%;
+  }
+
+  .card {
+    flex: 0 0 60vw;
+    max-width: 700px;
+    height: 70vh;
+    border-radius: 28px;
+    padding: 2.2rem 2.4rem 2.4rem;
+    display: flex;
+    flex-direction: column;
+    background: rgba(18, 20, 30, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+    will-change: opacity, transform;
+    transform-origin: center center;
+    /* default state (will be driven by JS) */
+    opacity: 0.25;
+    transform: scale(0.86);
+    transition: none;
+  }
+
+  /* leading spacer card — pure space so first real card lands at center */
+  .card--empty {
+    flex: 0 0 30vw;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    opacity: 0;
+  }
+
+  .card__media {
+    flex: 1;
+    border-radius: 18px;
+    margin-bottom: 1.4rem;
+    background: #1c1c28;
+    position: relative;
+    overflow: hidden;
+  }
+  .card__media::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.18), transparent 60%);
+  }
+
+  .card__index {
+    font-size: 0.7rem;
+    letter-spacing: 0.28em;
+    opacity: 0.55;
+    margin-bottom: 0.6rem;
+    text-transform: uppercase;
+  }
+  .card__title {
+    font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+    font-weight: 500;
+    line-height: 1.15;
+    margin-bottom: 0.6rem;
+  }
+  .card__text {
+    font-size: 0.95rem;
+    opacity: 0.7;
+    line-height: 1.65;
+  }
+
+  /* ★ Per-card theme colors (replace as needed) */
+  .card[data-theme="01"] .card__media { background: linear-gradient(135deg, #2a4858 0%, #14202c 100%); }
+  .card[data-theme="02"] .card__media { background: linear-gradient(135deg, #4a3526 0%, #261810 100%); }
+  .card[data-theme="03"] .card__media { background: linear-gradient(135deg, #1f3a3f 0%, #0f1c20 100%); }
+  .card[data-theme="04"] .card__media { background: linear-gradient(135deg, #3d2c44 0%, #1c1226 100%); }
+  .card[data-theme="05"] .card__media { background: linear-gradient(135deg, #2a3d2c 0%, #131e15 100%); }
+  .card[data-theme="06"] .card__media { background: linear-gradient(135deg, #2c2c44 0%, #14142a 100%); }
+
+  /* ─────────────────────── UI hints ─────────────────────── */
+  .scroll-hint {
+    position: fixed;
+    bottom: 1.6rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.65rem;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    opacity: 0.4;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  .progress-bar {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.06);
+    z-index: 20;
+  }
+  .progress-bar__fill {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #6580a8, #b8a070);
+    transition: width 0.05s linear;
+  }
+
+  /* ─────────────────────── Mobile fallback ─────────────────────── */
+  /* Below 768px the horizontal trick is disabled — cards stack vertically */
+  @media (max-width: 768px) {
+    .scene { height: auto; }
+    .scene__hold {
+      position: relative;
+      height: auto;
+      overflow: visible;
+    }
+    canvas.webgl { display: none; }
+
+    .scene__travel {
+      position: relative;
+      flex-direction: column;
+      transform: none !important;
+      height: auto;
+    }
+
+    .hero {
+      flex: none;
+      width: 100%;
+      height: auto;
+      padding: 5rem 1.5rem 3rem;
+    }
+
+    .cards {
+      flex-direction: column;
+      padding: 0 1.5rem 3rem;
+      gap: 1.6rem;
+      height: auto;
+    }
+    .card {
+      flex: none;
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      min-height: 24rem;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+    .card--empty { display: none; }
+    .scroll-hint { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar"><div class="progress-bar__fill"></div></div>
+
+<div class="scene">
+  <div class="scene__hold">
+    <canvas class="webgl"></canvas>
+
+    <div class="scene__travel">
+      <!-- Chapter title -->
+      <section class="hero">
+        <p class="hero__eyebrow">Chapter 01</p>
+        <h1 class="hero__title">How to<br/>sleep better</h1>
+        <p class="hero__sub">Scroll to drift through the dream-space. Each tip surfaces as you traverse.</p>
+      </section>
+
+      <!-- Tip cards -->
+      <ul class="cards">
+        <li class="card card--empty"></li>
+
+        <!-- ★ ────────── Replace card content below ────────── ★ -->
+        <li class="card" data-theme="01" data-progress="0.18">
+          <div class="card__media"></div>
+          <div class="card__index">01 — First tip</div>
+          <div class="card__title">🌗 Pre-bed ritual</div>
+          <div class="card__text">Dim the lights at sunset. Allow your circadian rhythm to slip into rest mode naturally — no screens after 10pm.</div>
+        </li>
+
+        <li class="card" data-theme="02" data-progress="0.32">
+          <div class="card__media"></div>
+          <div class="card__index">02 — Second tip</div>
+          <div class="card__title">🍵 Warm a cup</div>
+          <div class="card__text">Caffeine-free herbal tea triggers the body's cooling reflex on the way down — ideal 60 minutes before sleep.</div>
+        </li>
+
+        <li class="card" data-theme="03" data-progress="0.46">
+          <div class="card__media"></div>
+          <div class="card__index">03 — Third tip</div>
+          <div class="card__title">🌬 Breath of four</div>
+          <div class="card__text">Inhale four counts, hold four, exhale four, hold four. Box breathing slows the heart and quiets the mind.</div>
+        </li>
+
+        <li class="card" data-theme="04" data-progress="0.60">
+          <div class="card__media"></div>
+          <div class="card__index">04 — Fourth tip</div>
+          <div class="card__title">📓 Empty the brain</div>
+          <div class="card__text">Three lines of tomorrow's worries on paper before bed. Externalised tasks stop looping in REM.</div>
+        </li>
+
+        <li class="card" data-theme="05" data-progress="0.74">
+          <div class="card__media"></div>
+          <div class="card__index">05 — Fifth tip</div>
+          <div class="card__title">🌡 Cool the room</div>
+          <div class="card__text">A bedroom around 18°C lets your core temperature drop in sync with melatonin release.</div>
+        </li>
+
+        <li class="card" data-theme="06" data-progress="0.88">
+          <div class="card__media"></div>
+          <div class="card__index">06 — Sixth tip</div>
+          <div class="card__title">🌙 Same time tomorrow</div>
+          <div class="card__text">Wake at the same hour every day — even weekends. Consistency is the deepest sleep hack.</div>
+        </li>
+        <!-- ★ ─────────────────────────────────────────────── ★ -->
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-hint">Scroll ↓</div>
+
+<!-- ──────────────────── CDN imports ──────────────────── -->
+<!-- Three.js as ES module via importmap -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js"
+  }
+}
+</script>
+
+<!-- GSAP + ScrollTrigger -->
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+
+<!-- Lenis smooth scroll -->
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
+
+<script type="module">
+import * as THREE from 'three';
+
+gsap.registerPlugin(ScrollTrigger);
+
+const isMobile = window.matchMedia('(max-width: 768px)').matches;
+
+/* ───────────────────── Lenis smooth scroll ───────────────────── */
+let lenis;
+if (!isMobile) {
+  lenis = new Lenis({
+    duration: 1.15,
+    smoothWheel: true,
+    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  });
+  lenis.on('scroll', ScrollTrigger.update);
+  gsap.ticker.add((time) => lenis.raf(time * 1000));
+  gsap.ticker.lagSmoothing(0);
+}
+
+/* ───────────────────── Three.js base ───────────────────── */
+const canvas = document.querySelector('canvas.webgl');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor(0x07070d, 1);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x07070d, 0.045);
+
+const camera = new THREE.PerspectiveCamera(
+  55,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  120,
+);
+
+/* ───────────────────── Camera path ───────────────────── */
+/* ★ Tweak control points to redesign the journey */
+const curve = new THREE.CatmullRomCurve3([
+  new THREE.Vector3(  0,  0.0,   0),
+  new THREE.Vector3(  3,  0.6,  -4),
+  new THREE.Vector3(  7,  0.3,  -8),
+  new THREE.Vector3( 11, -0.2, -11),
+  new THREE.Vector3( 15,  0.1, -14),
+  new THREE.Vector3( 20,  0.5, -17),
+  new THREE.Vector3( 25,  0.2, -20),
+]);
+curve.curveType = 'centripetal';
+curve.tension = 0.5;
+
+/* ───────────────────── Lights ───────────────────── */
+scene.add(new THREE.AmbientLight(0x4060a0, 0.55));
+const keyLight = new THREE.DirectionalLight(0xfff0d8, 1.4);
+keyLight.position.set(6, 10, 4);
+scene.add(keyLight);
+const fillLight = new THREE.DirectionalLight(0x6080c0, 0.5);
+fillLight.position.set(-4, 2, -3);
+scene.add(fillLight);
+
+/* ───────────────────── Path markers ─────────────────────
+   Place glowing torus rings along the curve for "tunnel" feel.
+   ★ Replace with glTF models / textured planes / sprites */
+const ringGeom = new THREE.TorusGeometry(1.4, 0.04, 16, 96);
+const ringCount = 36;
+for (let i = 0; i < ringCount; i++) {
+  const t = i / (ringCount - 1);
+  const point = curve.getPointAt(t);
+  const tangent = curve.getTangentAt(t);
+  const hue = 0.55 + t * 0.18;
+  const mat = new THREE.MeshStandardMaterial({
+    color: new THREE.Color().setHSL(hue, 0.45, 0.55),
+    emissive: new THREE.Color().setHSL(hue, 0.6, 0.18),
+    roughness: 0.4,
+    metalness: 0.35,
+  });
+  const ring = new THREE.Mesh(ringGeom, mat);
+  ring.position.copy(point);
+  ring.lookAt(point.clone().add(tangent));
+  scene.add(ring);
+}
+
+/* Drifting particles for atmosphere */
+const particleCount = 1200;
+const pPositions = new Float32Array(particleCount * 3);
+for (let i = 0; i < particleCount; i++) {
+  pPositions[i * 3 + 0] = (Math.random() - 0.3) * 40;
+  pPositions[i * 3 + 1] = (Math.random() - 0.5) * 14;
+  pPositions[i * 3 + 2] = (Math.random() - 0.7) * 32;
+}
+const pGeom = new THREE.BufferGeometry();
+pGeom.setAttribute('position', new THREE.BufferAttribute(pPositions, 3));
+const pMat = new THREE.PointsMaterial({
+  color: 0xffffff,
+  size: 0.045,
+  transparent: true,
+  opacity: 0.45,
+  depthWrite: false,
+});
+const particles = new THREE.Points(pGeom, pMat);
+scene.add(particles);
+
+/* ───────────────────── Resize handling ───────────────────── */
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  ScrollTrigger.refresh();
+});
+
+/* ───────────────────── Scroll → progress ───────────────────── */
+const sceneEl   = document.querySelector('.scene');
+const travelEl  = document.querySelector('.scene__travel');
+const cardEls   = Array.from(document.querySelectorAll('.card'));
+const progressFill = document.querySelector('.progress-bar__fill');
+
+let progress = 0;
+
+function getTravelDistance() {
+  // Distance the traveler must move so its tail aligns with viewport right edge
+  return Math.max(0, travelEl.scrollWidth - window.innerWidth);
+}
+
+if (!isMobile) {
+  ScrollTrigger.create({
+    trigger: sceneEl,
+    start: 'top top',
+    end: 'bottom bottom',
+    scrub: 1,                  // ★ change to true for instant follow, or numeric for inertia
+    onUpdate: (self) => {
+      progress = self.progress;
+      const dist = getTravelDistance();
+      gsap.set(travelEl, { x: -progress * dist });
+      progressFill.style.width = (progress * 100) + '%';
+    },
+  });
+}
+
+/* ───────────────────── Card focus animation ─────────────────────
+   Each card has data-progress = scroll progress where it sits centered.
+   We animate opacity/scale based on distance from current progress. */
+function updateCards() {
+  for (const card of cardEls) {
+    const cp = parseFloat(card.dataset.progress);
+    if (isNaN(cp)) continue;
+    const distance = Math.abs(progress - cp);
+    const win = 0.13;                              // ★ fade window width
+    const focus = Math.max(0, 1 - distance / win);
+    const eased = focus * focus * (3 - 2 * focus); // smoothstep
+    const opacity = 0.22 + eased * 0.78;
+    const scale   = 0.86 + eased * 0.14;
+    card.style.opacity = opacity.toFixed(3);
+    card.style.transform = `scale(${scale.toFixed(3)})`;
+  }
+}
+
+/* ───────────────────── Render loop ───────────────────── */
+const tmpLook = new THREE.Vector3();
+
+function render() {
+  // Camera follows curve based on scroll progress
+  const p = Math.min(progress, 0.98);
+  curve.getPointAt(p, camera.position);
+  camera.position.y += 0.55;                       // slight elevation
+  curve.getPointAt(Math.min(p + 0.04, 1), tmpLook);
+  tmpLook.y += 0.55;
+  camera.lookAt(tmpLook);
+
+  // Subtle particle drift
+  particles.rotation.y += 0.0006;
+
+  updateCards();
+  renderer.render(scene, camera);
+  requestAnimationFrame(render);
+}
+
+render();
+</script>
+</body>
+</html>

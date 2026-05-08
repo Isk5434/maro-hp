@@ -12,17 +12,19 @@ export function HeroSection({ mouseNx, mouseNy }: Props) {
 
   return (
     <section className={styles.hero}>
-      <HeroCanvas mouseNx={mouseNx} mouseNy={mouseNy} />
+      <div data-hero-visual style={{ position: 'absolute', inset: 0 }}>
+        <HeroCanvas mouseNx={mouseNx} mouseNy={mouseNy} />
+      </div>
 
       <div className={styles.content}>
-        <h1 className={styles.heading}>{hero.heading}</h1>
-        <p className={styles.subtitle}>{hero.subtitle}</p>
-        <button className={styles.cta}>
+        <h1 className={styles.heading} data-hero-title data-hero-mask>{hero.heading}</h1>
+        <p className={styles.subtitle} data-hero-subtitle data-hero-mask>{hero.subtitle}</p>
+        <button className={styles.cta} data-hero-cta>
           {hero.cta} &nbsp;↓
         </button>
       </div>
 
-      <div className={styles.scrollHint}>
+      <div className={styles.scrollHint} data-hero-hint>
         <div className={styles.scrollLine} />
         <span>scroll</span>
       </div>

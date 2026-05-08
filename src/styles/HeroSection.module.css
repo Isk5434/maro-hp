@@ -26,6 +26,12 @@
   color: var(--color-text);
   filter: url(#wobble-filter);
   line-height: 1.0;
+  --hero-reveal-mask: linear-gradient(-15deg, black 0%, black 100%);
+  -webkit-mask-image: var(--hero-reveal-mask);
+  mask-image: var(--hero-reveal-mask);
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  will-change: transform, opacity, mask-image;
 }
 
 .subtitle {
@@ -35,6 +41,12 @@
   color: var(--color-text-light);
   max-width: 38ch;
   line-height: 1.8;
+  --hero-reveal-mask: linear-gradient(-15deg, black 0%, black 100%);
+  -webkit-mask-image: var(--hero-reveal-mask);
+  mask-image: var(--hero-reveal-mask);
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  will-change: transform, opacity, mask-image;
 }
 
 .cta {
